@@ -1,6 +1,6 @@
 // script.js — SwiftFX Currency Converter
-const API_ENDPOINT = 'https://api.exchangerate.host/convert';
-const SYMBOLS_ENDPOINT = 'https://api.exchangerate.host/symbols';
+const API_ENDPOINT = 'https://corsproxy.io/?https://api.exchangerate.host/convert';
+const SYMBOLS_ENDPOINT = 'https://corsproxy.io/?https://api.exchangerate.host/symbols';
 
 const fromCur = document.getElementById('from-currency');
 const toCur = document.getElementById('to-currency');
