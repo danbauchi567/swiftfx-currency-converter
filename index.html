@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SwiftFX — Currency Converter</title>
+  <style>
+    /* ---------- Global Reset ---------- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #f6f8fb;
+      color: #222;
+      line-height: 1.6;
+      scroll-behavior: smooth;
+    }
+
+    a { text-decoration: none; color: #007aff; }
+    a:hover { text-decoration: underline; }
+
+    header {
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: auto;
+      padding: 0.8rem 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #007aff;
+    }
+
+    .brand img {
+      width: 28px;
+      height: 28px;
+    }
+
+    nav a {
+      margin: 0 0.6rem;
+      font-weight: 500;
+    }
+
+    nav a.btn {
+      background: #007aff;
+      color: #fff;
+      padding: 0.4rem 0.9rem;
+      border-radius: 5px;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    h1, h2, h3 {
+      margin-bottom: 0.8rem;
+      color: #111;
+    }
+
+    label { font-weight: 500; }
+
+    input, select, button {
+      font-size: 1rem;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      margin-top: 0.3rem;
+    }
+
+    button.btn {
+      background: #007aff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.btn:hover {
+      background: #005fcc;
+    }
+
+    .converter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin: 1rem 0;
+    }
+
+    .muted { color: #666; }
+    .btn.primary { background: #007aff; color: #fff; }
+
+    footer {
+      background: #fff;
+      text-align: center;
+      padding: 1rem;
+      border-top: 1px solid #ddd;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    details {
+      margin-top: 1rem;
+      background: #f9f9f9;
+      padding: 0.8rem;
+      border-radius: 8px;
+    }
+
+    .ads-placeholder {
+      border: 1px dashed #aaa;
+      padding: 0.8rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .nav a.active {
+      font-weight: 600;
+      color: #005fcc;
+    }
+
+    /* Smooth scroll spacing fix */
+    section { scroll-margin-top: 70px; }
+textarea {
+  width: 100%;
+  height: 120px; /* increase this value if you want a taller box */
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: vertical; /* allows user to resize manually */
+}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="#home" class="brand"><img src="https://cdn-icons-png.flaticon.com/512/825/825454.png" alt="logo"> SwiftFX</a>
+      <nav class="nav">
+        <a href="#home">Home</a>
+        <a href="#blog">Blog</a>
+        <a href="#about">About</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#contact" class="btn small">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME / CONVERTER -->
+    <section id="home">
+      <h1>Currency Converter</h1>
+      <p class="muted">Fast live rates (powered by a free API) • Accessible • Responsive</p>
+
+      <div class="converter-grid">
+        <div>
+          <label for="from-amount">Amount</label>
+          <input id="from-amount" type="number" value="1" min="0" step="any">
+        </div>
+
+        <div>
+          <label for="from-currency">From</label>
+          <select id="from-currency"></select>
+        </div>
+
+        <div>
+          <label for="to-currency">To</label>
+          <select id="to-currency"></select>
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button id="swap-btn" class="btn">Swap ↔</button>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div id="rate-info" class="muted"></div>
+        <div id="result" class="result">—</div>
+      </div>
+
+      <div class="actions converter-grid">
+        <button id="convert-btn" class="btn primary">Convert</button>
+        <button id="save-rate" class="btn">Save Rate</button>
+        <select id="precision" title="Decimal places">
+          <option value="2">2 dp</option>
+          <option value="4">4 dp</option>
+          <option value="6">6 dp</option>
+        </select>
+      </div>
+
+      <details class="more">
+        <summary>Advanced / offline options</summary>
+        <label for="manual-rate">Manual rate (1 From = ? To)</label>
+        <input id="manual-rate" type="number" step="any" placeholder="e.g. 0.8432">
+        <label><input id="offline-mode" type="checkbox"> Use manual rate</label>
+      </details>
+
+      <div class="ads-placeholder muted">Ad space • replace with AdSense or affiliate banner</div>
+      <div class="affiliate-note">Want to monetize with affiliates? Add affiliate links or banners here.</div>
+    </section>
+
+    <!-- BLOG -->
+    <section id="blog">
+      <h2>Blog</h2>
+      <p>Coming soon — currency insights, forex trends, and updates.</p>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <h2>About SwiftFX</h2>
+      <p>SwiftFX is a modern, open-source currency converter designed for speed, simplicity, and accuracy. It uses live exchange rates from reliable APIs and supports over 180 currencies worldwide.</p>
+    </section>
+
+    <!-- PRIVACY -->
+    <section id="privacy">
+      <h2>Privacy Policy</h2>
+      <p>We respect your privacy — no personal data is stored. All exchange rate requests are handled anonymously through free public APIs. You can clear any locally saved rates at any time in your browser’s local storage.</p>
+    </section>
+
+    <!-- CONTACT -->
+    <!-- Contact Form -->
+<!-- Contact Form -->
+<form action="https://api.web3forms.com/submit" method="POST" class="contact-form">
+  <!-- ✅ Your new access key -->
+  <input type="hidden" name="access_key" value="ee5dc03b-15a4-441c-a85c-ddcd1ce774b8">
+
+  <label for="name">Your Name</label>
+  <input type="text" id="name" name="name" placeholder="Enter your name" required>
+
+  <label for="email">Your Email</label>
+  <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+  <label for="message">Your Message</label>
+  <textarea id="message" name="message" placeholder="Write your message here..." rows="6" required></textarea>
+
+  <button type="submit">Send Message</button>
+</form>
+
+<!-- Contact Form CSS -->
+<style>
+  .contact-form {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    font-family: Arial, sans-serif;
+  }
+
+  .contact-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+
+  .contact-form textarea {
+    resize: vertical;
+    min-height: 150px;
+  }
+
+  .contact-form button {
+    width: 100%;
+    background: #007BFF;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .contact-form button:hover {
+    background: #0056b3;
+  }
+</style>
+<style>
+<!-- Contact Form CSS -->
+  .contact-form {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    font-family: Arial, sans-serif;
+  }
+
+  .contact-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+
+  .contact-form textarea {
+    resize: vertical;
+    min-height: 150px;
+  }
+
+  .contact-form button {
+    width: 100%;
+    background: #007BFF;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .contact-form button:hover {
+    background: #0056b3;
+  }
+</style>
+  </main>
+
+  <footer>
+    © <span id="year"></span> SwiftFX — All rights reserved.
+  </footer>
+
+  <script>
+    // ------- JavaScript: Currency Converter Logic -------
+    const API_ENDPOINT = 'https://api.exchangerate.host/convert';
+    const fromCur = document.getElementById('from-currency');
+    const toCur = document.getElementById('to-currency');
+    const fromAmt = document.getElementById('from-amount');
+    const manualRate = document.getElementById('manual-rate');
+    const offlineMode = document.getElementById('offline-mode');
+    const convertBtn = document.getElementById('convert-btn');
+    const swapBtn = document.getElementById('swap-btn');
+    const resultEl = document.getElementById('result');
+    const rateInfo = document.getElementById('rate-info');
+    const precision = document.getElementById('precision');
+    const savedRatesKey = 'swiftfx.saved.rates';
+
+    const fallbackCurrencies = ["USD","EUR","GBP","NGN","CAD","AUD","JPY","CNY","INR","BRL","ZAR","SGD","CHF","SEK","KRW"];
+
+    async function fetchSymbols() {
+      try {
+        const r = await fetch('https://api.exchangerate.host/symbols');
+        if (!r.ok) throw new Error();
+        const j = await r.json();
+        const keys = Object.keys(j.symbols);
+        keys.sort();
+        return keys;
+      } catch {
+        return fallbackCurrencies;
+      }
+    }
+
+    async function populateSelects() {
+      const symbols = await fetchSymbols();
+      for (const s of symbols) {
+        const o1 = document.createElement('option');
+        const o2 = document.createElement('option');
+        o1.value = o2.value = s;
+        o1.textContent = o2.textContent = s;
+        fromCur.appendChild(o1);
+        toCur.appendChild(o2);
+      }
+      fromCur.value = 'USD';
+      toCur.value = 'EUR';
+    }
+
+    async function convert() {
+      const from = fromCur.value;
+      const to = toCur.value;
+      const amount = parseFloat(fromAmt.value || '0');
+      const dp = parseInt(precision.value || 2);
+
+      if (amount <= 0) {
+        resultEl.textContent = 'Enter an amount';
+        return;
+      }
+
+      if (offlineMode.checked && manualRate.value) {
+        const rate = parseFloat(manualRate.value);
+        const value = (amount * rate).toFixed(dp);
+        rateInfo.textContent = `Manual rate used: 1 ${from} = ${rate}`;
+        resultEl.textContent = `${value} ${to}`;
+        return;
+      }
+
+      rateInfo.textContent = 'Fetching latest rate…';
+      try {
+        const res = await fetch(`${API_ENDPOINT}?from=${from}&to=${to}&amount=${amount}`);
+        const data = await res.json();
+        if (!data.result) throw new Error();
+        const rate = data.info.rate;
+        const value = data.result.toFixed(dp);
+        rateInfo.textContent = `1 ${from} = ${rate.toFixed(6)} ${to}`;
+        resultEl.textContent = `${value} ${to}`;
+      } catch {
+        rateInfo.textContent = 'Error fetching rate — try offline/manual rate.';
+        resultEl.textContent = '—';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await populateSelects();
+      document.getElementById('year').textContent = new Date().getFullYear();
+      convert();
+    });
+
+    convertBtn.addEventListener('click', e => { e.preventDefault(); convert(); });
+    swapBtn.addEventListener('click', () => {
+      const a = fromCur.value;
+      fromCur.value = toCur.value;
+      toCur.value = a;
+      convert();
+    });
+
+    document.getElementById('save-rate').addEventListener('click', async () => {
+      try {
+        const from = fromCur.value, to = toCur.value;
+        const res = await fetch(`${API_ENDPOINT}?from=${from}&to=${to}`);
+        const data = await res.json();
+        const rate = data.info.rate;
+        const saved = JSON.parse(localStorage.getItem(savedRatesKey) || '{}');
+        saved[`${from}_${to}`] = { rate, time: new Date().toISOString() };
+        localStorage.setItem(savedRatesKey, JSON.stringify(saved));
+        alert(`Saved rate ${rate} for ${from}→${to}`);
+      } catch {
+        alert('Unable to save rate. Make sure you are online.');
+      }
+    });
+  </script>
+</body>
+</html>
